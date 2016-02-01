@@ -1,9 +1,10 @@
 <?php
-
+//Funzione richiamata quando arriva una richiesta di tipo GET
 function processGET($url_array,$db_link){
-    $tabella = $url_array[2];
-    $idrisorsa = $url_array[3];
-    $query = "SELECT * FROM $tabella";
+    $tabella = $url_array[2]; //tabella a cui facciamo riferimento per il db
+    $idrisorsa = $url_array[3]; //id della risorsa di cui vogliamo i dettagli
+    $query = "SELECT * FROM $tabella"; 
+    //in base al tipo di tabella richiesta la query viene modificata per ottenere i dati richiesti
     if($tabella=="Utente"){
 	$query="SELECT email, idUtente, Cognome, Nome FROM $tabella";
         $token=$url_array[4];
@@ -29,10 +30,11 @@ function processGET($url_array,$db_link){
 	$query=$query.";";
       }
     }
-    $res = mysqli_query($db_link, $query)or die("mysql error");
+    $res = mysqli_query($db_link, $query)or die("mysql error"); //eseguo la query sul database
     if ($res == null) {
         header('HTTP/1.1 404 NOT FOUND');
     } else {
+        //rispondo alla richiesta GET con i dati in formato JSONArray
         header('HTTP/1.1 200 OK');
         header('Content-type: application/json');
         while ($current = mysqli_fetch_assoc($res)) {
@@ -43,22 +45,26 @@ function processGET($url_array,$db_link){
 }
 
 function processPUT($url_array, $db_link){
-    echo "è stato chiamato un metodo put";
+    echo "è stato chiamato un metodo put"; //Non Usata
 }
+//Funzione richiamata quando il server riceve una richiesta POST
+//La query in questa funzione viene generata dinamicamente a partire dai dati inseriti nella POST
+//nomi dei campi e valori vengono inviati al server sotto forma di POST
 function processPOST($url_array, $db_link, $post_data){
-    $tabella= $url_array[2];
-    $query ="INSERT INTO $tabella";
+    $tabella= $url_array[2]; //tabella in cui verranno inseriti i dati
+    //inizio generazione query
+    $query ="INSERT INTO $tabella"; 
     $query_field="(";
     $query_value="VALUES(";
     $arraysize=count($post_data)-1;
     $iteration=0;
     foreach($post_data as $item_name => $value){
-        if($arraysize!=$iteration){
+        if($arraysize!=$iteration){//se non è l'ultima iterazione aggiungo una virgola per separare i campi
        $query_field="$query_field $item_name,";
         $query_value="$query_value '$value',";
         
         }
-        else{
+        else{// non inserisco la virgola all'ultima iterazione
             $query_field="$query_field $item_name";
         $query_value="$query_value '$value'";
         }
@@ -66,15 +72,17 @@ function processPOST($url_array, $db_link, $post_data){
     }
     $query_field="$query_field) ";
     $query_value="$query_value);";
-    $query=$query.$query_field.$query_value;
-    mysqli_query($db_link,$query)or die("Error processing Post");
+    $query=$query.$query_field.$query_value; //assemblo la query unendo campi e valori
+    mysqli_query($db_link,$query)or die("Error processing Post"); //eseguo la query
     header('HTTP/1.1 200 OK');
-    echo "";
+    echo ""; //rispondo con un echo vuoto per dire che è tutto ok
 }
+//Funzione che viene richiamata quando al server arriva una richiesta DELETE
+//viene richiamata solo dalla rimozione dei generi dalle preferenze di un utente
 function processDELETE($url_array,$db_link){
-    $tabella=$url_array[2];
-    $idUtente=$url_array[3];
-    $idGenere=$url_array[4];
+    $tabella=$url_array[2]; //Tabella dal quale rimuovere un elemento
+    $idUtente=$url_array[3];//id dell'utente richiedente
+    $idGenere=$url_array[4];//id della risorsa da eliminare
     $query="DELETE FROM $tabella WHERE Utente_idUtente='$idUtente' AND Genere_idGenere='$idGenere'";
     mysqli_query($db_link,$query)or die("Error processing Delete");
     header('HTTP/1.1 200 OK');
